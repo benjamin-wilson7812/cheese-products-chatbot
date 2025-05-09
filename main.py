@@ -5,6 +5,7 @@ from datetime import datetime
 import sqlite3
 import uuid
 import hashlib
+import streamlit.components.v1 as components
 
 # Initialize database connection
 def init_db():
@@ -90,7 +91,8 @@ if "messages" not in st.session_state:
     st.session_state["messages"] = [
         {"role": "assistant", "content": "How can I help you?"}
     ]
-
+if "last_context" not in st.session_state:
+    st.session_state["last_context"] = "No context available."
 # Initialize database connection
 conn = init_db()
 
@@ -158,6 +160,52 @@ with st.sidebar.expander("Previous Chats"):
     else:
         st.write("No chat history available.")
 
+# Add copy context and copy answer buttons to the sidebar
+with st.sidebar:
+    st.markdown("---")
+    st.markdown("**Copy Options:**")
+    col_copy_context, col_copy_answer = st.columns(2)
+    button_style = """
+        <style>
+        .custom-copy-btn {
+            border: 2px solid #e3e6e8;
+            border-radius: 12px;
+            background: #f8f9fa;
+            color: #222;
+            padding: 8px 18px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.2s, border 0.2s;
+        }
+        .custom-copy-btn:hover {
+            background: #e3e6e8;
+            border-color: #bfc4c9;
+        }
+        </style>
+    """
+    with col_copy_context:
+        context = st.session_state.last_context
+        components.html(
+            button_style +
+            f"""
+            <button class="custom-copy-btn" onclick="navigator.clipboard.writeText(`{context}`); alert('Context copied!');">
+                Copy Context
+            </button>
+            """,
+            height=60,
+        )
+    with col_copy_answer:
+        answer = st.session_state.messages[-1]["content"] if st.session_state.messages else "No answer available."
+        components.html(
+            button_style +
+            f"""
+            <button class="custom-copy-btn" onclick="navigator.clipboard.writeText(`{answer}`); alert('Answer copied!');">
+                Copy Answer
+            </button>
+            """,
+            height=60,
+        )
+
 st.title("Cheese Products AI - Assistant")
 
 # Display messages
@@ -177,9 +225,7 @@ if prompt := st.chat_input():
     st.chat_message("assistant").write(result["response"])
 
     # Notification state management
-    st.session_state["show_context_notification"] = True
-    st.session_state["show_context_detail"] = False
-    st.session_state["last_context"] = result.get("context", result["response"])  # fallback to response if no context
+    st.session_state.last_context= result.get("context", result["response"])  # fallback to response if no contextfallback to response if no context
 
     # Store messages in database
     cursor = conn.cursor()
@@ -211,31 +257,4 @@ def get_short_context(context):
     if '.' in context:
         return context.split('.')[0] + '.'
     return context[:50] + ('...' if len(context) > 50 else '')
-
-# Notification UI (always show at the end of the script)
-if st.session_state.get("show_context_notification"):
-    with st.container():
-        # Get context versions
-        full_context = st.session_state.get("last_context", "No context available.")
-        short_context = get_short_context(full_context)
-        show_full = st.session_state.get("show_context_detail", False)
-
-        # Display context (short or full)
-        st.info(full_context if show_full else short_context)
-
-        # Small icon-only buttons
-        col1, col2, col3 = st.columns([1,1,1])
-        with col1:
-            if not show_full:
-                if st.button("", key="show_detail_btn", help="Show more", icon="👁️"):
-                    st.session_state["show_context_detail"] = True
-            else:
-                if st.button("", key="less_context_btn", help="Show less", icon="➖"):
-                    st.session_state["show_context_detail"] = False
-        with col2:
-            if st.button("", key="cancel_context_btn", help="Cancel notification", icon="❌"):
-                st.session_state["show_context_notification"] = False
-                st.session_state["show_context_detail"] = False
-
-# Close database connection
 conn.close()
