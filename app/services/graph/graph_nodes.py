@@ -1,12 +1,10 @@
 from typing import List, Dict
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage, HumanMessage
-import pandas as pd
 
 from app.core.config import settings, ModelType
 from app.db.vectordb import vector_db
 from app.db.mysql import mysql_db
-from app.core.logging import logger
 from app.core.prompt_templates.sql_vector import sql_vector
 from app.core.prompt_templates.generate_sql import generate_sql
 from app.core.prompt_templates.generate_response import generate_response
@@ -75,7 +73,6 @@ def data_retrieval_node(state: GraphState) -> GraphState:
         state.messages.append({"role": "assistant", "content": response.content})
 
     except Exception as e:
-        logger.error(f"Error in data retrieval: {str(e)}")
         state.messages.append({
             "role": "assistant",
             "content": "I apologize, but I encountered an error while retrieving the information. Could you please rephrase your question?"
