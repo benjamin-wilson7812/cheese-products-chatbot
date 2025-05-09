@@ -1,11 +1,8 @@
 from typing import List, Dict
 from langgraph.graph import StateGraph, START
 from langchain_openai import ChatOpenAI
-from langchain_core.messages import HumanMessage
 from app.core.config import settings, ModelType
-from app.core.prompt_templates.generate_response import generate_response
 from app.services.graph.graph_state import GraphState, DatabaseEnum
-from app.db.vectordb import vector_db
 from app.services.graph.graph_nodes import (
     determine_database,
     txt2sql_node,
@@ -45,6 +42,6 @@ class ChatService:
         messages = conversation_history + [{"role": "user", "content": query}]
         initial_state = GraphState(messages=messages,query=query)
         final_state = self._build_data_retrieval_graph().invoke(initial_state)
-        return {"response" : final_state["messages"][-1]["content"]}
+        return {"response" : final_state["messages"][-1]["content"], "context" : final_state["context"]}
 
 chat_service = ChatService()

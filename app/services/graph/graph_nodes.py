@@ -1,6 +1,7 @@
 from typing import List, Dict
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage, HumanMessage
+import streamlit as st
 
 from app.core.config import settings, ModelType
 from app.db.vectordb import vector_db
@@ -65,6 +66,7 @@ def data_retrieval_node(state: GraphState) -> GraphState:
                 if value is not None
             ]) for result in results
         )
+        state.context = context
         prompt = generate_response.format(
             context=context,
         )
@@ -79,3 +81,37 @@ def data_retrieval_node(state: GraphState) -> GraphState:
         })
 
     return state
+
+# Example: get a short version (first sentence or 50 chars)
+def get_short_context(context):
+    if not context:
+        return ""
+    # Try to get first sentence, else first 50 chars
+    if '.' in context:
+        return context.split('.')[0] + '.'
+    return context[:50] + ('...' if len(context) > 50 else '')
+
+# Notification UI (always show at the end of the script)
+if st.session_state.get("show_context_notification"):
+    with st.container():
+        # Get context versions
+        full_context = st.session_state.get("last_context", "No context available.")
+        short_context = get_short_context(full_context)
+        show_full = st.session_state.get("show_context_detail", False)
+
+        # Display context (short or full)
+        st.info(full_context if show_full else short_context)
+
+        # Small icon-only buttons
+        col1, col2, col3 = st.columns([1,1,1])
+        with col1:
+            if not show_full:
+                if st.button("", key="show_detail_btn", help="Show more", icon="👁️"):
+                    st.session_state["show_context_detail"] = True
+            else:
+                if st.button("", key="less_context_btn", help="Show less", icon="➖"):
+                    st.session_state["show_context_detail"] = False
+        with col2:
+            if st.button("", key="cancel_context_btn", help="Cancel notification", icon="❌"):
+                st.session_state["show_context_notification"] = False
+                st.session_state["show_context_detail"] = False
