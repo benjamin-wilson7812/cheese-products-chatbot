@@ -1,0 +1,15 @@
+langchain_core
+langchain_openai
+langchain_pinecone
+langgraph
+pinecone
+pydantic
+pymysql
+python-dotenv
+streamlit
+google-api-python-client
+protoc-gen-openapiv2
+grpcio
+cryptography
+chardet
+pydantic-settings
