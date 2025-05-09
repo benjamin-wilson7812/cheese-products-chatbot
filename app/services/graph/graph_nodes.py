@@ -79,7 +79,7 @@ def data_retrieval_node(state: GraphState) -> GraphState:
             "role": "assistant",
             "content": "I apologize, but I encountered an error while retrieving the information. Could you please rephrase your question?"
         })
-
+        state.context = "I apologize, but I encountered an error while retrieving the information. Could you please rephrase your question?"
     return state
 
 # Example: get a short version (first sentence or 50 chars)
